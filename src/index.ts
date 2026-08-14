@@ -14,6 +14,21 @@ app.get("/health/db", async (request, reply) => {
   return { status: "ok", serverTime: result.rows[0].now };
 });
 
+app.post("/items", async (request, reply) => {
+  const { name } = request.body as { name: string };
+  const result = await pool.query(
+    "INSERT INTO items (name) VALUES ($1) RETURNING *",
+    [name]
+  );
+  reply.code(201);
+  return result.rows[0];
+});
+
+app.get("/items", async (request, reply) => {
+  const result = await pool.query("SELECT * FROM items ORDER BY id");
+  return result.rows;
+});
+
 const start = async () => {
   try {
     await app.listen({ port });
