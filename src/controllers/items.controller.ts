@@ -6,7 +6,7 @@ export async function createItem(request: FastifyRequest, reply: FastifyReply) {
     name: string;
     description?: string;
   };
-  const item = await itemsService.createItem(name, description);
+  const item = await itemsService.createItem(name, description, request.user.id);
   reply.code(201);
   return item;
 }
@@ -17,12 +17,7 @@ export async function listItems(request: FastifyRequest, reply: FastifyReply) {
 
 export async function getItem(request: FastifyRequest, reply: FastifyReply) {
   const { id } = request.params as { id: string };
-  const item = await itemsService.getItem(id);
-  if (!item) {
-    reply.code(404);
-    return { error: "Item not found" };
-  }
-  return item;
+  return itemsService.getItem(id);
 }
 
 export async function replaceItem(request: FastifyRequest, reply: FastifyReply) {
@@ -31,12 +26,7 @@ export async function replaceItem(request: FastifyRequest, reply: FastifyReply) 
     name: string;
     description?: string;
   };
-  const item = await itemsService.replaceItem(id, name, description);
-  if (!item) {
-    reply.code(404);
-    return { error: "Item not found" };
-  }
-  return item;
+  return itemsService.replaceItem(id, name, description, request.user.id);
 }
 
 export async function patchItem(request: FastifyRequest, reply: FastifyReply) {
@@ -45,20 +35,11 @@ export async function patchItem(request: FastifyRequest, reply: FastifyReply) {
     name?: string;
     description?: string;
   };
-  const item = await itemsService.patchItem(id, name, description);
-  if (!item) {
-    reply.code(404);
-    return { error: "Item not found" };
-  }
-  return item;
+  return itemsService.patchItem(id, name, description, request.user.id);
 }
 
 export async function deleteItem(request: FastifyRequest, reply: FastifyReply) {
   const { id } = request.params as { id: string };
-  const item = await itemsService.deleteItem(id);
-  if (!item) {
-    reply.code(404);
-    return { error: "Item not found" };
-  }
+  await itemsService.deleteItem(id, request.user.id);
   reply.code(204);
 }
