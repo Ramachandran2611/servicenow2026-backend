@@ -1,9 +1,12 @@
 import "dotenv/config";
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import { pool } from "./db";
 
 const app = Fastify({ logger: true });
 const port = Number(process.env.PORT) || 3000;
+
+app.register(cors);
 
 app.get("/health", async (request, reply) => {
   return { status: "ok" };
@@ -15,10 +18,13 @@ app.get("/health/db", async (request, reply) => {
 });
 
 app.post("/items", async (request, reply) => {
-  const { name } = request.body as { name: string };
+  const { name, description } = request.body as {
+    name: string;
+    description?: string;
+  };
   const result = await pool.query(
-    "INSERT INTO items (name) VALUES ($1) RETURNING *",
-    [name]
+    "INSERT INTO items (name, description) VALUES ($1, $2) RETURNING *",
+    [name, description ?? null]
   );
   reply.code(201);
   return result.rows[0];
@@ -41,10 +47,30 @@ app.get("/items/:id", async (request, reply) => {
 
 app.put("/items/:id", async (request, reply) => {
   const { id } = request.params as { id: string };
-  const { name } = request.body as { name: string };
+  const { name, description } = request.body as {
+    name: string;
+    description?: string;
+  };
   const result = await pool.query(
-    "UPDATE items SET name = $1 WHERE id = $2 RETURNING *",
-    [name, id]
+    "UPDATE items SET name = $1, description = $2 WHERE id = $3 RETURNING *",
+    [name, description ?? null, id]
+  );
+  if (result.rows.length === 0) {
+    reply.code(404);
+    return { error: "Item not found" };
+  }
+  return result.rows[0];
+});
+
+app.patch("/items/:id", async (request, reply) => {
+  const { id } = request.params as { id: string };
+  const { name, description } = request.body as {
+    name?: string;
+    description?: string;
+  };
+  const result = await pool.query(
+    "UPDATE items SET name = COALESCE($1, name), description = COALESCE($2, description) WHERE id = $3 RETURNING *",
+    [name ?? null, description ?? null, id]
   );
   if (result.rows.length === 0) {
     reply.code(404);
