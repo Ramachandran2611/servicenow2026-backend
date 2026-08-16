@@ -8,17 +8,9 @@ export function makeAuthController(app: FastifyInstance) {
         email: string;
         password: string;
       };
-      try {
-        const user = await authService.registerUser(email, password);
-        reply.code(201);
-        return user;
-      } catch (err) {
-        if (err instanceof authService.DuplicateEmailError) {
-          reply.code(409);
-          return { error: err.message };
-        }
-        throw err;
-      }
+      const user = await authService.registerUser(email, password);
+      reply.code(201);
+      return user;
     },
 
     async login(request: FastifyRequest, reply: FastifyReply) {
@@ -26,17 +18,9 @@ export function makeAuthController(app: FastifyInstance) {
         email: string;
         password: string;
       };
-      try {
-        const user = await authService.verifyCredentials(email, password);
-        const token = app.jwt.sign({ id: user.id, email: user.email });
-        return { token };
-      } catch (err) {
-        if (err instanceof authService.InvalidCredentialsError) {
-          reply.code(401);
-          return { error: err.message };
-        }
-        throw err;
-      }
+      const user = await authService.verifyCredentials(email, password);
+      const token = app.jwt.sign({ id: user.id, email: user.email });
+      return { token };
     },
   };
 }

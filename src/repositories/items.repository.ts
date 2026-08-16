@@ -1,9 +1,13 @@
 import { pool } from "../db";
 
-export async function insertItem(name: string, description: string | null) {
+export async function insertItem(
+  name: string,
+  description: string | null,
+  createdBy: number
+) {
   const result = await pool.query(
-    "INSERT INTO items (name, description) VALUES ($1, $2) RETURNING *",
-    [name, description]
+    "INSERT INTO items (name, description, created_by) VALUES ($1, $2, $3) RETURNING *",
+    [name, description, createdBy]
   );
   return result.rows[0];
 }
